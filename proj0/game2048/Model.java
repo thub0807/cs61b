@@ -113,6 +113,60 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        board.setViewingPerspective(side);
+        int size = board.size();
+        for (int col = 0; col < size; col++) {
+            // Step1. move every non-empty tile in order
+            // [x, 2, 2, x] -> [2, 2, x, x]
+            // skip merging this step.
+            for (int row = size - 1; row >= 0; row--) {
+                Tile t = board.tile(col, row);
+                if (t != null) {
+                    // find nextPos which is null
+                    int nextPos = 3;
+                    while (nextPos >= row) {
+                        if (board.tile(col, nextPos) == null) {
+                            break;
+                        }
+                        nextPos--;
+                    }
+                    // check if nextPos is a legal position
+                    if (nextPos >= row) {
+                        board.move(col, nextPos, t);
+                        changed = true;
+                    }
+                }
+            }
+            // Step2. try to merge
+            // [2, 2, x, x] -> [4, x, x, x]
+            for (int row = 3; row >= 0; row--) {
+                Tile curTile = board.tile(col, row);
+                int nextLine = row - 1;
+                if (nextLine < 0) {
+                    break;
+                }
+                Tile nextTile = board.tile(col, nextLine);
+                if (curTile == null || nextTile == null) {
+                    break;
+                }
+                int nextValue = nextTile.value();
+                if (nextValue == curTile.value()) {
+                    board.move(col, row, nextTile);
+                    score += curTile.value() * 2;
+                    for (int p = nextLine - 1; p >= 0; p--) {
+                        Tile tt = board.tile(col, p);
+                        if (tt == null) {
+                            break;
+                        }
+                        if (p < size) {
+                            board.move(col, p + 1, tt);
+                        }
+                    }
+                    changed = true;
+                }
+            }
+        }
+        board.setViewingPerspective(Side.NORTH);
 
         checkGameOver();
         if (changed) {
@@ -137,7 +191,13 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
+        for (int i =0;i<b.size();i++){
+            for(int j =0;j<b.size();j++){
+                if (b.tile(i,j)==null){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -147,7 +207,16 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        // TODO: Fill in this function.
+        int size = b.size();
+        for (int col = 0; col < size; col++) {
+            for (int row = 0; row < size; row++) {
+                Tile t = b.tile(col, row);
+                // only when t != null should we check t.value()
+                if (t != null && t.value() == MAX_PIECE) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -158,7 +227,27 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+        if(emptySpaceExists(b)){
+            return true;
+        }
+        int size = b.size();
+        int[] x = {0,-1,0,1};
+        int[] y = {-1,0,1,0};
+        for (int i=0;i<size;i++){
+            for (int j =0;j<size;j++){
+                int curTileValue = b.tile(i,j).value();
+                for (int n=0 ;n<4;n++){
+                    int change_i= i+x[n];
+                    int change_j = j+y[n];
+                    if(change_i<size&&change_j<size&&change_i>0&&change_j>0){
+                        int change_value = b.tile(change_i, change_j).value();
+                        if (change_value == curTileValue){
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
         return false;
     }
 

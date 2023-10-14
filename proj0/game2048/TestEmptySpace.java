@@ -24,8 +24,7 @@ public class TestEmptySpace {
         };
 
         b = new Board(rawVals, 0);
-        assertTrue("Board is full of empty space\n" + b,
-                Model.emptySpaceExists(b));
+        assertTrue("Board is full of empty space\n" + b, Model.emptySpaceExists(b));
     }
 
     @Test
